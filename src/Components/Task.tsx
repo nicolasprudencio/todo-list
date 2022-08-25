@@ -1,31 +1,26 @@
 import styles from './Task.module.css'
 
 import { Trash } from 'phosphor-react'
-import { useEffect, useState } from 'react'
 
 interface taskProps {
   content: string
-  id: number
-  childToParent: React.Dispatch<React.SetStateAction<number>>
+  isCompleted: boolean
+  id: string
+  childToParent: (e: any, id: string) => void
   onTaskDelete: (content: string) => void
 }
 
-export function Task({ content, onTaskDelete, childToParent, id }: taskProps) {
-  const [clicked, setClicked] = useState(false)
-
+export function Task({
+  content,
+  onTaskDelete,
+  childToParent,
+  id,
+  isCompleted
+}: taskProps) {
   function checkedByUser(e: any) {
-    setClicked(e.target.checked)
-
-    console.log('clicked', e.target.checked)
-    childToParent(e)
-
-    console.log(e.target.checked)
+    const isChecked = e.target.checked
+    childToParent(isChecked, id)
   }
-
-  function handleDeleteTask() {
-    onTaskDelete(content)
-  }
-
   return (
     <div className={styles.Container}>
       <label className={styles.Checkbox}>
@@ -33,12 +28,12 @@ export function Task({ content, onTaskDelete, childToParent, id }: taskProps) {
         <span className={styles.Checkmark} />
       </label>
 
-      {clicked === true ? (
+      {isCompleted ? (
         <p className={styles.Content}>{content}</p>
       ) : (
         <p>{content}</p>
       )}
-      <button onClick={handleDeleteTask} className={styles.Trash}>
+      <button onClick={() => onTaskDelete(id)} className={styles.Trash}>
         <Trash size={22} />
       </button>
     </div>

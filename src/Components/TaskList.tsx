@@ -2,57 +2,73 @@ import styles from './TaskList.module.css'
 import { v4 as uuid } from 'uuid'
 import { PlusCircle } from 'phosphor-react'
 import { Task } from './Task'
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import { ChangeEvent, useMemo, useState } from 'react'
+
+type Task = {
+  name: string
+  isCompleted: boolean
+  id: string
+}
 
 export function TaskList() {
-  const [tasks, setTasks] = useState(['Limpar a casa e dar banho no cachorro'])
-  const [newTask, setNewTask] = useState('')
-  const [data, setData] = useState([] as any[])
+  const [tasks, setTasks] = useState([] as Task[])
+  const [createTaskData, setCreateTaskData] = useState('')
 
-  function handleNewTask(e: ChangeEvent<HTMLTextAreaElement>) {
-    setNewTask(e.target.value)
-  }
+  const countTasksCompleted = useMemo(() => {
+    return tasks.filter((tasks) => tasks.isCompleted === true).length
+  }, [tasks])
 
-  function handleCreateNewTask(e: FormEvent) {
-    e.preventDefault()
-
-    if (newTask.length === 0) {
+  function handleCreateNewTask() {
+    if (createTaskData.length === 0) {
       return alert('Preencha o campo de tarefas com uma tarefa válida')
     }
 
-    setTasks([...tasks, newTask])
-    setNewTask('')
+    setTasks([
+      ...tasks,
+      {
+        name: createTaskData,
+        isCompleted: false,
+        id: uuid()
+      }
+    ])
+    setCreateTaskData('')
   }
 
-  function deleteTask(taskToDelete: string) {
-    const taskListWithoutDeletedTask = tasks.filter((task) => {
-      return task !== taskToDelete
+  function deleteTask(id: string) {
+    const newTasks = tasks.filter((task) => {
+      return task.id !== id
     })
-
-    setTasks(taskListWithoutDeletedTask)
+    setTasks(newTasks)
   }
 
-  const savedTask = (e: any) => {
-    setData((state) => [...state, { [e.target.name]: e.target.checked }])
+  const changeIsChecked = (value: boolean, index: string) => {
+    const newList = tasks.map((task, i) => {
+      console.log(i, index)
+      if (task.id === index) {
+        return {
+          ...task,
+          isCompleted: value
+        }
+      }
+      return task
+    })
+    setTasks(newList)
   }
-
-  useEffect(() => {
-    console.log('return data', data)
-  }, [data])
-
   return (
     <>
       <div className={styles.Wrapper}>
-        <form className={styles.Container}>
+        <div className={styles.Container}>
           <textarea
-            value={newTask}
-            onChange={handleNewTask}
+            value={createTaskData}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
+              setCreateTaskData(e.target.value)
+            }
             placeholder="Adicione uma tarefa"
           />
           <button onClick={handleCreateNewTask}>
             Criar <PlusCircle size={18} />
           </button>
-        </form>
+        </div>
         <div>
           <header className={styles.tasksCount}>
             <div className={styles.createdTasks}>
@@ -61,19 +77,21 @@ export function TaskList() {
             </div>
             <div className={styles.completedTasks}>
               <p>Concluídas</p>
-              <span>de {tasks.length}</span>
+              <span>
+                {' '}
+                {countTasksCompleted} de {tasks.length}
+              </span>
             </div>
           </header>
-          {tasks.map((task, index) => {
-            const id: string = uuid()
-
+          {tasks.map((task) => {
             return (
               <Task
-                id={index}
-                key={id}
+                isCompleted={task.isCompleted}
+                id={task.id}
+                key={task.id}
                 onTaskDelete={deleteTask}
-                content={task}
-                childToParent={savedTask}
+                content={task.name}
+                childToParent={changeIsChecked}
               />
             )
           })}
